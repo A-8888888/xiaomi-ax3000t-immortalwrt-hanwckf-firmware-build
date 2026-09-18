@@ -14,6 +14,8 @@ env:
   SELF_AFTER_SH: after-update-custom.sh
   TZ: Asia/Shanghai
   FEEDS_CONF: feeds.conf.default
+  # ccache 缓存目录（加速后续重跑）
+  CCACHE_DIR: /srcdir/openwrt/.ccache
 
 jobs:
   build:
@@ -62,6 +64,8 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /srcdir
         sudo chown $USER:$GROUPS /srcdir
+        # 确保 ccache 已安装（配合 CONFIG_CCACHE=y 加速重跑）
+        sudo apt-get install -y ccache
 
     - name: Clone source code
       working-directory: /srcdir
@@ -70,6 +74,14 @@ jobs:
         df -hT $PWD
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /srcdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Restore ccache
+      uses: actions/cache/restore@v4
+      with:
+        path: /srcdir/openwrt/.ccache
+        key: ccache-${{ runner.os }}-${{ hashFiles('openwrt/feeds.conf.default') }}
+        restore-keys: |
+          ccache-${{ runner.os }}-
 
     - name: Load custom feeds
       run: |
@@ -168,13 +180,13 @@ jobs:
         cd openwrt
         make clean
 
-    - name: Cache Compile
+    - name: Save ccache
       id: cache-compile
-      uses: actions/cache/save@v6
+      uses: actions/cache/save@v4
       if: steps.compile.outputs.status == 'success' && !cancelled()
       with:
-        path: openwrt
-        key: ${{ runner.os }}-openwrt-${{ hashFiles('openwrt/feeds.conf.default') }}
+        path: /srcdir/openwrt/.ccache
+        key: ccache-${{ runner.os }}-${{ hashFiles('openwrt/feeds.conf.default') }}
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@v2
