@@ -5,8 +5,10 @@ on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x.git
-  REPO_BRANCH: openwrt-21.02
+  # ===== 已改为官方 ImmortalWrt 24.10（原仓库是 hanwckf 21.02）=====
+  # 想要 25.x 就把下一行改成 openwrt-25.12
+  REPO_URL: https://github.com/immortalwrt/immortalwrt.git
+  REPO_BRANCH: openwrt-24.10
   CONFIG_FILE: .config
   SELF_BEFORE_SH: before-update-custom.sh
   SELF_AFTER_SH: after-update-custom.sh
@@ -31,7 +33,7 @@ jobs:
         tool-cache: false
         
         # all of these default to true, but feel free to set to
-        # "false" if necessary for your workflow
+        # "false" if necessary for your build
         android: true
         dotnet: true
         haskell: true
